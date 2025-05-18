@@ -3,6 +3,8 @@ import { Product } from "../../domain/entities/Product";
 import { Customer } from "../../domain/entities/Customer";
 import { OrderRepository } from "../../domain/repositories/OrderRepository";
 import { ProductRepository } from "../../domain/repositories/ProductRepository";
+import { CreateOrderDto } from "../dtos/CreateOrderDto";
+import { ValidationService } from "./ValidationService";
 
 export class OrderService {
   constructor(
@@ -10,13 +12,23 @@ export class OrderService {
     private productRepository: ProductRepository
   ) {}
 
-  async createOrder(
-    customer: Customer,
-    items: { productId: string; quantity: number }[]
-  ): Promise<Order> {
+  async createOrder(orderData: CreateOrderDto): Promise<Order> {
+    // 1. Validar el DTO
+    await ValidationService.validate(orderData, CreateOrderDto);
+
+    // 2. Crear el cliente (que tiene sus propias validaciones de dominio)
+    const customer = new Customer(
+      orderData.customerId,
+      orderData.customerName,
+      orderData.customerEmail,
+      orderData.customerAddress
+    );
+
+    // 3. Crear la orden usando el método factory
     const order = Order.create(customer);
 
-    for (const item of items) {
+    // 4. Procesar los items
+    for (const item of orderData.items) {
       const product = await this.productRepository.findById(item.productId);
       if (!product) {
         throw new Error(`Product ${item.productId} not found`);
@@ -24,6 +36,7 @@ export class OrderService {
       order.addItem(product, item.quantity);
     }
 
+    // 5. Persistir la orden
     await this.orderRepository.save(order);
     return order;
   }
