@@ -14,7 +14,7 @@ export class OrderService {
     customer: Customer,
     items: { productId: string; quantity: number }[]
   ): Promise<Order> {
-    const order = new Order(this.generateId(), customer);
+    const order = Order.create(customer);
 
     for (const item of items) {
       const product = await this.productRepository.findById(item.productId);

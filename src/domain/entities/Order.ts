@@ -1,6 +1,7 @@
 import { Customer } from "./Customer";
 import { Product } from "./Product";
 import { Money } from "../value-objects/Money";
+import { EntityId } from "../value-objects/EntityId";
 
 export type OrderStatus =
   | "PENDING"
@@ -21,13 +22,17 @@ export class Order {
   private status: OrderStatus = "PENDING";
 
   constructor(
-    private readonly id: string,
+    private readonly id: EntityId,
     private readonly customer: Customer,
     private readonly createdAt: Date = new Date()
   ) {}
 
+  static create(customer: Customer): Order {
+    return new Order(EntityId.generate(), customer);
+  }
+
   getId(): string {
-    return this.id;
+    return this.id.toString();
   }
 
   getCustomer(): Customer {
